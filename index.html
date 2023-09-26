@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Button Page</title>
+    <title>Robot Games</title>
+    <link rel="stylesheet" href="assets/style.css">
     <style>
         body {
             display: flex;
@@ -15,7 +17,8 @@
         }
 
         button {
-            font-size: 24px;
+            font-family: Atarian;
+            font-size: 50px;
             padding: 10px 20px;
             margin: 10px;
         }
@@ -23,7 +26,8 @@
 </head>
 
 <body>
-    <button id="robotButton" onclick="window.location.href='actions.html';">Robot Actions</button>
-    <button id="craneButton" onclick="window.location.href='crane.html';">Crane Game</button>
+    <button id="actionsButton" onclick="window.location.href='src/robot_actions/robot_actions.html';">Robot Actions</button>
+    <button id="stackerButton" onclick="window.location.href='src/robot_stacker/robot_stacker.html';">Robot Stacker</button>
 </body>
+
 </html>

@@ -1,0 +1,15 @@
+@font-face {
+    font-family: Atarian;
+    src: url('fonts/atarian.ttf');
+    font-weight: 400;
+    font-weight: normal;
+}
+
+body {
+    font-family: Atarian;
+    text-align: center;
+}
+
+button {
+    font-family: Atarian;
+}
