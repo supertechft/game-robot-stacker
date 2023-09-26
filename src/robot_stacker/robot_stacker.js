@@ -1,15 +1,17 @@
 
+// Game Options
+let game;
 let currentLevel = 1;
 let levelCriteria = [0, 3, 5, 7]; // Level 0 (not used), Level 1: 3 boxes, Level 2: 5 boxes, Level 3: 7 boxes
-let game;
 let gameOptions = {
-    //     timeLimit: 30,
+    // timeLimit: 30,
     gravity: 1,
     crateHeight: 700,
     crateRange: [-300, 300],
     crateSpeed: 1000
 }
 
+// Phaser Setup
 window.onload = function () {
     let config = {
         type: Phaser.AUTO,
@@ -36,27 +38,51 @@ window.onload = function () {
 }
 
 
+
+/*
+* Scene to display messages
+*/
 class PauseMessage extends Phaser.Scene {
     constructor() {
         super("PauseMessage");
     }
 
+    /*
+    * Scene Setup
+    */
     preload() {
         // this.load.image("robot", "/assets/sprites/ground.png");
     }
 
+    // Get message from the scene that called this scene
+    // caller: the scene that called this scene
+    // message: the message to display
     init(data) {
+        this.caller = data.caller;
         this.message = data.message;
     }
 
     create() {
         this.addBackground();
         this.displayMessage();
+
+        // Click to continue
         this.input.on("pointerdown", () => {
-            this.scene.start('RobotStacker');
-            // this.scene.resume('RobotStacker');
-            // this.scene.stop();
+            // this.scene.start(this.caller);
+            this.scene.resume(this.caller);
+            this.scene.stop();
         });
+    }
+
+
+    /*
+    * Helper Functions
+    */
+
+    // Create a semi-transparent black background
+    addBackground() {
+        let background = this.add.rectangle(0, 0, game.config.width, game.config.height, 0x000000, 0.75);
+        background.setOrigin(0, 0);
     }
 
     // Create the text message in the center of the screen
@@ -65,64 +91,18 @@ class PauseMessage extends Phaser.Scene {
             fontFamily: "Atarian",
             fontSize: "32px",
             fill: "#ffffff",
-            align: "center"
+            align: "center",
+            wordWrap: { width: game.config.width - 50, useAdvancedWrap: true }
         });
         this.text.setOrigin(0.5, 0.5);
-
-        // Make the text interactive and remove it upon click
-        // this.text.setInteractive();
-        // this.text.on("pointerdown", () => {
-        //     this.text.destroy();
-        //     // background.destroy();
-        // });
-    }
-
-    addBackground() {
-        // Create a semi-transparent black background
-        let background = this.add.rectangle(0, 0, game.config.width, game.config.height, 0x000000, 0.7);
-        background.setOrigin(0, 0);
-    }
-
-    showCongratulatoryMessage() {
-        // Create a text message
-        let message = "Great job!\nYou completed level " + currentLevel + ".";
-        let text = this.add.text(game.config.width / 2, game.config.height / 2, message, {
-            fontFamily: "Atarian",
-            fontSize: '32px',
-            color: '#FFFFFF',
-            align: 'center'
-        });
-        text.setOrigin(0.5);
-
-        // Add a click or touch event to dismiss the message
-        bg.setInteractive().on('pointerdown', () => {
-            bg.destroy();
-            text.destroy();
-        });
-    }
-
-    showFinalMessage() {
-        // Create a text message
-        let message = "Congratulations!\nYou completed all levels.";
-        let text = this.add.text(game.config.width / 2, game.config.height / 2, message, {
-            fontFamily: "Atarian",
-            fontSize: '32px',
-            color: '#FFFFFF',
-            align: 'center'
-        });
-        text.setOrigin(0.5);
-
-        // Add a click or touch event to restart the game
-        bg.setInteractive().on('pointerdown', () => {
-            bg.destroy();
-            text.destroy();
-            this.scene.restart();
-        });
     }
 }
 
 
 
+/*
+* Main Game Scene
+*/
 class RobotStacker extends Phaser.Scene {
     constructor() {
         super("RobotStacker");
@@ -130,8 +110,9 @@ class RobotStacker extends Phaser.Scene {
 
 
     /*
-    * Game Setup
+    * Game Scene Setup
     */
+   
     preload() {
         this.load.image("ground", "/assets/sprites/ground.png");
         this.load.image("sky", "/assets/sprites/sky.png");
@@ -143,12 +124,12 @@ class RobotStacker extends Phaser.Scene {
     create() {
         this.matter.world.update30Hz();
         this.canDrop = true;
-        //         this.timer = 0;
-        //         this.timerEvent = null;
+        // this.timer = 0;
+        // this.timerEvent = null;
         this.addSky();
         this.addGround();
         this.addMovingCrate();
-        //         this.timeText = this.add.bitmapText(10, 10, "font", gameOptions.timeLimit.toString(), 72);
+        // this.timeText = this.add.bitmapText(10, 10, "font", gameOptions.timeLimit.toString(), 72);
         this.crateGroup = this.add.group();
         this.addCraneStructure();
         this.matter.world.on("collisionstart", this.checkCollision, this);
@@ -158,6 +139,7 @@ class RobotStacker extends Phaser.Scene {
 
     update() {
         this.crateGroup.getChildren().forEach(function (crate) {
+            console.log(crate.getBounds().top)
             if (crate.y > game.config.height + crate.displayHeight) {
                 if (!crate.body.hit) {
                     this.nextCrate();
@@ -171,10 +153,11 @@ class RobotStacker extends Phaser.Scene {
     /*
     * Build Environment
     */
+
     addCraneStructure() {
         this.craneVertical = this.add.sprite(game.config.width - 83, game.config.height / 2, "crane-vertical");
         this.craneHorizontal = this.add.sprite(game.config.width / 2, this.movingCrate.y, "crane-horizontal");
-        //         this.craneVertical.scaleY = 1.05;
+        // this.craneVertical.scaleY = 1.05;
         // this.craneGroup = this.add.group();
         // const verticalBlock = this.add.rectangle(game.config.width - 25, game.config.height / 2, 50, game.config.height, 0x71797E); // x, y, width, height, color
         // const horizontalBlock = this.add.rectangle(game.config.width / 2, this.movingCrate.y, game.config.width, 50, 0x71797E);
@@ -200,10 +183,7 @@ class RobotStacker extends Phaser.Scene {
         this.ground.setStatic(true);
     }
 
-
-    /*
-    * Game Logic
-    */
+    // Move crate back and forth on the top of the screen  
     addMovingCrate() {
         this.movingCrate = this.add.sprite(game.config.width / 2 - gameOptions.crateRange[0], this.ground.getBounds().top - gameOptions.crateHeight, "crate");
         this.tweens.add({
@@ -214,6 +194,11 @@ class RobotStacker extends Phaser.Scene {
             repeat: -1
         })
     }
+
+
+    /*
+    * Game Logic
+    */
 
     checkCollision(e, b1, b2) {
         if (b1.isCrate && !b1.hit) {
@@ -234,8 +219,8 @@ class RobotStacker extends Phaser.Scene {
     }
 
     dropCrate() {
-        //         if(this.canDrop && this.timer < gameOptions.timeLimit){
-        // this.addTimer();
+        // if(this.canDrop && this.timer < gameOptions.timeLimit){
+            // this.addTimer();
         if (this.canDrop) {
             this.canDrop = false;
             this.movingCrate.visible = false;
@@ -247,11 +232,14 @@ class RobotStacker extends Phaser.Scene {
                 console.log("totalcrates", totalCrates)
                 if (totalCrates >= levelCriteria[currentLevel]) {
                     this.scene.pause();
-                    // this.scene.launch('PauseMessage', { message: "Great job! You completed level " + currentLevel + ". Click to continue." })
-                    this.scene.start('PauseMessage', { message: "Great job! You completed level " + currentLevel + ". Click to continue." })
+                    this.scene.launch('PauseMessage', {
+                        caller: this.scene.key,
+                        message: `Great job!
+                        You completed level ${currentLevel}
+                        
+                        Click to continue.`
+                    })
                     currentLevel++;
-                    // this.scene.restart();
-                    // this.scene.resume('sceneA');
                 }
 
                 // Reset the game for the next level
@@ -296,7 +284,7 @@ class RobotStacker extends Phaser.Scene {
     }
 
     nextCrate() {
-        //         this.zoomCamera();
+        // this.zoomCamera();
         this.canDrop = true;
         this.movingCrate.visible = true;
     }
@@ -309,9 +297,9 @@ class RobotStacker extends Phaser.Scene {
             }
         }, this);
         this.movingCrate.y = this.ground.getBounds().top - maxHeight * this.movingCrate.displayWidth - gameOptions.crateHeight;
-        //         let zoomFactor = gameOptions.crateHeight / (this.ground.getBounds().top - this.movingCrate.y);
-        //         this.actionCamera.zoomTo(zoomFactor, 500);
-        //         let newHeight = game.config.height / zoomFactor;
+        let zoomFactor = gameOptions.crateHeight / (this.ground.getBounds().top - this.movingCrate.y);
+        this.actionCamera.zoomTo(zoomFactor, 500);
+        let newHeight = game.config.height / zoomFactor;
         this.actionCamera.pan(game.config.width / 2, game.config.height / 2 - (newHeight - game.config.height) / 2, 500)
     }
 
