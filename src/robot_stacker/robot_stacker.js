@@ -28,7 +28,7 @@ window.onload = function () {
                 gravity: {
                     y: gameOptions.gravity
                 },
-                debug: false
+                debug: true
             }
         },
         scene: [RobotStacker, PauseMessage]
@@ -112,11 +112,15 @@ class RobotStacker extends Phaser.Scene {
     /*
     * Game Scene Setup
     */
-   
+
     preload() {
-        this.load.image("ground", "/assets/sprites/ground.png");
         this.load.image("sky", "/assets/sprites/sky.png");
-        this.load.image("crate", "/assets/sprites/crate.png");
+        this.load.image("ground", "/assets/sprites/ground.png");
+        this.load.image("block_red", "/assets/sprites/block_red.png");
+        this.load.image("block_blue", "/assets/sprites/block_blue.png");
+        this.load.image("block_gift", "/assets/sprites/block_gift.png");
+        this.load.image("block_green", "/assets/sprites/block_green.png");
+        this.load.image("block_yellow", "/assets/sprites/block_yellow.png");
         this.load.image("crane-vertical", "/assets/sprites/crane-vertical.png");
         this.load.image("crane-horizontal", "/assets/sprites/crane-horizontal.png");
     }
@@ -124,8 +128,11 @@ class RobotStacker extends Phaser.Scene {
     create() {
         this.matter.world.update30Hz();
         this.canDrop = true;
+        this.highestCrateHeight = game.config.height;
+        this.currentBlock = this.getRandomBlock();
         // this.timer = 0;
         // this.timerEvent = null;
+        this.createGrid(this, 100, 0xfffffff);
         this.addSky();
         this.addGround();
         this.addMovingCrate();
@@ -138,16 +145,23 @@ class RobotStacker extends Phaser.Scene {
     }
 
     update() {
+        console.log(this.highestCrateHeight)
         this.crateGroup.getChildren().forEach(function (crate) {
-            console.log(crate.getBounds().top)
+            // If the crate falls off bottom of the screen
             if (crate.y > game.config.height + crate.displayHeight) {
+                // If the crate does not collide, spawn next crate
+                // checkCollision() spawns another crate anyway otherwise
                 if (!crate.body.hit) {
                     this.nextCrate();
                 }
                 crate.destroy();
+            } else {
+                if (crate.body.hit && crate.getBounds().top < this.highestCrateHeight)
+                    this.highestCrateHeight = crate.getBounds().top
             }
         }, this);
     }
+
 
 
     /*
@@ -177,15 +191,40 @@ class RobotStacker extends Phaser.Scene {
         this.ground.setBody({
             type: "rectangle",
             width: this.ground.displayWidth,
-            height: this.ground.displayHeight * 2
+            height: this.ground.displayHeight * 2,
         });
         this.ground.setOrigin(0.5, 1);
         this.ground.setStatic(true);
+        console.log(this.ground.displayHeight, this.ground.height, this.ground.getBounds(), game.config.height)
+    }
+
+    createGrid(scene, gridSize, color) {
+        const graphics = scene.add.graphics();
+        graphics.lineStyle(1, color); // Set line style (thickness and color)
+
+        // Vertical lines
+        for (let x = 0; x < scene.game.config.width; x += gridSize) {
+            graphics.moveTo(x, 0);
+            graphics.lineTo(x, scene.game.config.height);
+        }
+
+        graphics.moveTo(0, 832);
+        graphics.lineTo(scene.game.config.width, 832);
+
+        // Horizontal lines
+        for (let y = 0; y < scene.game.config.height; y += gridSize) {
+            graphics.moveTo(0, y);
+            graphics.lineTo(scene.game.config.width, y);
+        }
+
+        // Render the grid
+        graphics.strokePath();
     }
 
     // Move crate back and forth on the top of the screen  
     addMovingCrate() {
-        this.movingCrate = this.add.sprite(game.config.width / 2 - gameOptions.crateRange[0], this.ground.getBounds().top - gameOptions.crateHeight, "crate");
+        this.movingCrate = this.add.sprite(game.config.width / 2 - gameOptions.crateRange[0], this.ground.getBounds().top - gameOptions.crateHeight, this.currentBlock);
+        console.log(this.movingCrate.displayWidth, this.movingCrate.displayHeight)
         this.tweens.add({
             targets: this.movingCrate,
             x: game.config.width / 2 - gameOptions.crateRange[1],
@@ -220,7 +259,7 @@ class RobotStacker extends Phaser.Scene {
 
     dropCrate() {
         // if(this.canDrop && this.timer < gameOptions.timeLimit){
-            // this.addTimer();
+        // this.addTimer();
         if (this.canDrop) {
             this.canDrop = false;
             this.movingCrate.visible = false;
@@ -263,6 +302,15 @@ class RobotStacker extends Phaser.Scene {
     }
 
 
+    /*
+    * Helper Functions
+    */
+
+    getRandomBlock() {
+        let blockArray = ["block_red", "block_blue", "block_green", "block_gift", "block_yellow"];
+        return blockArray[Math.floor(Math.random() * blockArray.length)];
+    }
+
     addTimer() {
         if (this.timerEvent == null) {
             this.timerEvent = this.time.addEvent({
@@ -276,15 +324,17 @@ class RobotStacker extends Phaser.Scene {
 
 
     addFallingCrate() {
-        let fallingCrate = this.matter.add.sprite(this.movingCrate.x, this.movingCrate.y, "crate");
+        let fallingCrate = this.matter.add.sprite(this.movingCrate.x, this.movingCrate.y, this.currentBlock);
         fallingCrate.body.isCrate = true;
         fallingCrate.body.hit = false;
         this.crateGroup.add(fallingCrate);
-        //         this.cameras.main.ignore(fallingCrate)
+        // this.cameras.main.ignore(fallingCrate)
     }
 
     nextCrate() {
         // this.zoomCamera();
+        this.currentBlock = this.getRandomBlock();
+        this.movingCrate.setTexture(this.currentBlock);
         this.canDrop = true;
         this.movingCrate.visible = true;
     }
