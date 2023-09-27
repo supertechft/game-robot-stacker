@@ -1,8 +1,9 @@
 
-// Game Options
+/*
+* Game Options
+*/
 let game;
-let currentLevel = 1;
-let levelCriteria = [0, 3, 5, 7]; // Level 0 (not used), Level 1: 3 boxes, Level 2: 5 boxes, Level 3: 7 boxes
+let levelGoals = [0, 3, 5, 7]; // Number of blocks to stack for each level. 0 is unused.
 let gameOptions = {
     // timeLimit: 30,
     gravity: 1,
@@ -11,7 +12,11 @@ let gameOptions = {
     crateSpeed: 1000
 }
 
-// Phaser Setup
+
+
+/*
+* Phaser Setup
+*/
 window.onload = function () {
     let config = {
         type: Phaser.AUTO,
@@ -20,7 +25,6 @@ window.onload = function () {
         scale: {
             mode: Phaser.Scale.FIT,
             autoCenter: Phaser.Scale.CENTER_BOTH,
-
         },
         physics: {
             default: "matter",
@@ -130,12 +134,15 @@ class RobotStacker extends Phaser.Scene {
         this.canDrop = true;
         this.highestCrateHeight = game.config.height;
         this.currentBlock = this.getRandomBlock();
+        this.currentLevel = 1;
+
         // this.timer = 0;
         // this.timerEvent = null;
-        this.createGrid(this, 100, 0xfffffff);
+        // this.createGrid(this, 100, 0xfffffff);
         this.addSky();
         this.addGround();
         this.addMovingCrate();
+        this.addGoalLine();
         // this.timeText = this.add.bitmapText(10, 10, "font", gameOptions.timeLimit.toString(), 72);
         this.crateGroup = this.add.group();
         this.addCraneStructure();
@@ -165,8 +172,12 @@ class RobotStacker extends Phaser.Scene {
 
 
     /*
-    * Build Environment
+    * Game Objects
     */
+
+    addGameObjects() {
+
+    }
 
     addCraneStructure() {
         this.craneVertical = this.add.sprite(game.config.width - 83, game.config.height / 2, "crane-vertical");
@@ -195,7 +206,6 @@ class RobotStacker extends Phaser.Scene {
         });
         this.ground.setOrigin(0.5, 1);
         this.ground.setStatic(true);
-        console.log(this.ground.displayHeight, this.ground.height, this.ground.getBounds(), game.config.height)
     }
 
     createGrid(scene, gridSize, color) {
@@ -208,8 +218,8 @@ class RobotStacker extends Phaser.Scene {
             graphics.lineTo(x, scene.game.config.height);
         }
 
-        graphics.moveTo(0, 832);
-        graphics.lineTo(scene.game.config.width, 832);
+        graphics.moveTo(0, 601);
+        graphics.lineTo(scene.game.config.width, 601);
 
         // Horizontal lines
         for (let y = 0; y < scene.game.config.height; y += gridSize) {
@@ -224,7 +234,6 @@ class RobotStacker extends Phaser.Scene {
     // Move crate back and forth on the top of the screen  
     addMovingCrate() {
         this.movingCrate = this.add.sprite(game.config.width / 2 - gameOptions.crateRange[0], this.ground.getBounds().top - gameOptions.crateHeight, this.currentBlock);
-        console.log(this.movingCrate.displayWidth, this.movingCrate.displayHeight)
         this.tweens.add({
             targets: this.movingCrate,
             x: game.config.width / 2 - gameOptions.crateRange[1],
@@ -232,6 +241,20 @@ class RobotStacker extends Phaser.Scene {
             yoyo: true,
             repeat: -1
         })
+    }
+
+    addGoalLine(update = false) {
+        if (!update) {
+            this.goalLine = this.add.graphics();
+        } else {
+            this.goalLine.clear();
+        }
+
+        const dotSpacing = 10; // Adjust the spacing between dots
+        this.goalLine.lineStyle(2, 0x00ff00); // Set line color to green
+        for (let x = 0; x < game.config.width; x += dotSpacing * 2) {
+            this.goalLine.fillRect(x, this.getGoalY(), dotSpacing, 3); // Create a dotted line (x, y, spacing, thickness)
+        }
     }
 
 
@@ -263,31 +286,23 @@ class RobotStacker extends Phaser.Scene {
         if (this.canDrop) {
             this.canDrop = false;
             this.movingCrate.visible = false;
-            this.addFallingCrate();
             // }
 
-            if (currentLevel < levelCriteria.length) {
-                let totalCrates = this.crateGroup.getChildren().length;
-                console.log("totalcrates", totalCrates)
-                if (totalCrates >= levelCriteria[currentLevel]) {
+            if (this.currentLevel < levelGoals.length) {
+                if (this.highestCrateHeight <= this.getGoalY()) {
                     this.scene.pause();
                     this.scene.launch('PauseMessage', {
                         caller: this.scene.key,
                         message: `Great job!
-                        You completed level ${currentLevel}
+                        You completed level ${this.currentLevel}
                         
                         Click to continue.`
                     })
-                    currentLevel++;
+                    this.currentLevel++;
+                    this.addGoalLine(true);
                 }
 
-                // Reset the game for the next level
-                if (currentLevel > levelCriteria.length) {
-                    // Game completed, show a final message or restart the game from level 1
-                    this.showFinalMessage();
-                    currentLevel = 1;
-                    this.scene.restart();
-                }
+
                 // if (currentLevel <= levelCriteria.length) {
                 //     this.scene.restart();
                 // } else {
@@ -296,8 +311,14 @@ class RobotStacker extends Phaser.Scene {
                 //     currentLevel = 1;
                 //     this.scene.restart();
                 // }
-
+            } else { // Reset the game for the next level
+                // Game completed, show a final message or restart the game from level 1
+                this.showFinalMessage();
+                this.currentLevel = 1;
+                this.scene.restart();
             }
+
+            this.addFallingCrate();
         }
     }
 
@@ -309,6 +330,10 @@ class RobotStacker extends Phaser.Scene {
     getRandomBlock() {
         let blockArray = ["block_red", "block_blue", "block_green", "block_gift", "block_yellow"];
         return blockArray[Math.floor(Math.random() * blockArray.length)];
+    }
+
+    getGoalY() {
+        return this.ground.getBounds().top - levelGoals[this.currentLevel] * this.movingCrate.height
     }
 
     addTimer() {
