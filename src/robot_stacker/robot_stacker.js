@@ -9,7 +9,7 @@ let gameOptions = {
     gravity: 1,
     crateHeight: 700,
     crateRange: [-300, 300],
-    crateSpeed: 1500
+    crateSpeed: 1250
 }
 
 
@@ -126,8 +126,6 @@ class RobotStacker extends Phaser.Scene {
         this.load.image("block_gift", "/assets/sprites/block_gift.png");
         this.load.image("block_green", "/assets/sprites/block_green.png");
         this.load.image("block_yellow", "/assets/sprites/block_yellow.png");
-        this.load.image("crane-vertical", "/assets/sprites/crane-vertical.png");
-        this.load.image("crane-horizontal", "/assets/sprites/crane-horizontal.png");
     }
 
     create() {
@@ -137,19 +135,23 @@ class RobotStacker extends Phaser.Scene {
         this.currentBlock = this.getRandomBlock();
         this.currentLevel = 1;
 
-        // this.timer = 0;
-        // this.timerEvent = null;
-        // this.createGrid(this, 100, 0xfffffff);
+        // Add Game Objects
         this.addSky();
         this.addGround();
         this.addClawBlock();
         this.addGoalLine();
-        // this.timeText = this.add.bitmapText(10, 10, "font", gameOptions.timeLimit.toString(), 72);
+        if (game.config.physics.matter.debug) {
+            this.createGrid(this, 100, 0xfffffff);
+        }
+
         this.crateGroup = this.add.group();
-        this.addCraneStructure();
         this.matter.world.on("collisionstart", this.checkCollision, this);
         this.setCameras();
         this.input.on("pointerdown", this.dropCrate, this);
+
+        // this.timer = 0;
+        // this.timerEvent = null;
+        // this.timeText = this.add.bitmapText(10, 10, "font", gameOptions.timeLimit.toString(), 72);
     }
 
     update() {
@@ -176,37 +178,6 @@ class RobotStacker extends Phaser.Scene {
     * Game Objects
     */
 
-    addGameObjects() {
-
-    }
-
-    addClawBlock() {
-        const x = game.config.width / 2 - gameOptions.crateRange[0];
-        const y = this.ground.getBounds().top - gameOptions.crateHeight;
-        this.clawBlock = this.add.sprite(x, y, this.currentBlock);
-        this.claw = this.add.sprite(x, y, "claw");
-        this.claw.setOrigin(0.5, 1);
-        this.tweens.add({
-            targets: [this.clawBlock, this.claw],
-            x: game.config.width / 2 - gameOptions.crateRange[1],
-            duration: gameOptions.crateSpeed,
-            yoyo: true,
-            repeat: -1
-        })
-    }
-
-    addCraneStructure() {
-        this.craneVertical = this.add.sprite(game.config.width - 83, game.config.height / 2, "crane-vertical");
-        this.craneHorizontal = this.add.sprite(game.config.width / 2, this.clawBlock.y, "crane-horizontal");
-        // this.craneVertical.scaleY = 1.05;
-        // this.craneGroup = this.add.group();
-        // const verticalBlock = this.add.rectangle(game.config.width - 25, game.config.height / 2, 50, game.config.height, 0x71797E); // x, y, width, height, color
-        // const horizontalBlock = this.add.rectangle(game.config.width / 2, this.clawBlock.y, game.config.width, 50, 0x71797E);
-        // this.craneGroup.add(horizontalBlock);
-        // this.craneGroup.add(verticalBlock);
-        // this.matter.add.gameObject(this.craneGroup, { isStatic: true });
-    }
-
     addSky() {
         this.sky = this.add.sprite(0, 0, "sky");
         this.sky.displayWidth = game.config.width;
@@ -224,34 +195,15 @@ class RobotStacker extends Phaser.Scene {
         this.ground.setStatic(true);
     }
 
-    createGrid(scene, gridSize, color) {
-        const graphics = scene.add.graphics();
-        graphics.lineStyle(1, color); // Set line style (thickness and color)
-
-        // Vertical lines
-        for (let x = 0; x < scene.game.config.width; x += gridSize) {
-            graphics.moveTo(x, 0);
-            graphics.lineTo(x, scene.game.config.height);
-        }
-
-        graphics.moveTo(0, 601);
-        graphics.lineTo(scene.game.config.width, 601);
-
-        // Horizontal lines
-        for (let y = 0; y < scene.game.config.height; y += gridSize) {
-            graphics.moveTo(0, y);
-            graphics.lineTo(scene.game.config.width, y);
-        }
-
-        // Render the grid
-        graphics.strokePath();
-    }
-
-    // Move crate back and forth on the top of the screen  
-    addMovingCrate() {
-        this.movingCrate = this.add.sprite(game.config.width / 2 - gameOptions.crateRange[0], this.ground.getBounds().top - gameOptions.crateHeight, this.currentBlock);
+    // Move claw with block back and forth on the top of the screen
+    addClawBlock() {
+        const x = game.config.width / 2 - gameOptions.crateRange[0];
+        const y = this.ground.getBounds().top - gameOptions.crateHeight;
+        this.clawBlock = this.add.sprite(x, y, this.currentBlock);
+        this.claw = this.add.sprite(x, y, "claw");
+        this.claw.setOrigin(0.5, 1);
         this.tweens.add({
-            targets: this.movingCrate,
+            targets: [this.clawBlock, this.claw],
             x: game.config.width / 2 - gameOptions.crateRange[1],
             duration: gameOptions.crateSpeed,
             yoyo: true,
@@ -291,7 +243,7 @@ class RobotStacker extends Phaser.Scene {
 
     setCameras() {
         this.actionCamera = this.cameras.add(0, 0, game.config.width, game.config.height);
-        // this.actionCamera.ignore([this.sky, this.timeText, this.craneVertical, this.craneHorizontal]);
+        // this.actionCamera.ignore([this.sky, this.timeText]);
         this.cameras.main.ignore([this.ground, this.clawBlock]);
     }
 
@@ -351,18 +303,6 @@ class RobotStacker extends Phaser.Scene {
         return this.ground.getBounds().top - levelGoals[this.currentLevel] * this.clawBlock.height
     }
 
-    addTimer() {
-        if (this.timerEvent == null) {
-            this.timerEvent = this.time.addEvent({
-                delay: 1000,
-                callback: this.tick,
-                callbackScope: this,
-                loop: true
-            });
-        }
-    }
-
-
     addFallingCrate() {
         let fallingCrate = this.matter.add.sprite(this.clawBlock.x, this.clawBlock.y, this.currentBlock);
         fallingCrate.body.isCrate = true;
@@ -377,6 +317,43 @@ class RobotStacker extends Phaser.Scene {
         this.clawBlock.setTexture(this.currentBlock);
         this.canDrop = true;
         this.clawBlock.visible = true;
+    }
+
+    createGrid(scene, gridSize, color) {
+        const graphics = scene.add.graphics();
+        graphics.lineStyle(1, color); // Set line style (thickness and color)
+
+        // Vertical lines
+        for (let x = 0; x < scene.game.config.width; x += gridSize) {
+            graphics.moveTo(x, 0);
+            graphics.lineTo(x, scene.game.config.height);
+        }
+
+        // Horizontal lines
+        for (let y = 0; y < scene.game.config.height; y += gridSize) {
+            graphics.moveTo(0, y);
+            graphics.lineTo(scene.game.config.width, y);
+        }
+
+        // Render the grid
+        graphics.strokePath();
+    }
+
+
+
+    /*
+    * Unused Functions
+    */
+
+    addTimer() {
+        if (this.timerEvent == null) {
+            this.timerEvent = this.time.addEvent({
+                delay: 1000,
+                callback: this.tick,
+                callbackScope: this,
+                loop: true
+            });
+        }
     }
 
     zoomCamera() {
