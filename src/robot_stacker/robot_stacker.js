@@ -9,7 +9,7 @@ let gameOptions = {
     gravity: 1,
     crateHeight: 700,
     crateRange: [-300, 300],
-    crateSpeed: 1000
+    crateSpeed: 1500
 }
 
 
@@ -120,6 +120,7 @@ class RobotStacker extends Phaser.Scene {
     preload() {
         this.load.image("sky", "/assets/sprites/sky.png");
         this.load.image("ground", "/assets/sprites/ground.png");
+        this.load.image("claw", "/assets/sprites/claw-extended.png");
         this.load.image("block_red", "/assets/sprites/block_red.png");
         this.load.image("block_blue", "/assets/sprites/block_blue.png");
         this.load.image("block_gift", "/assets/sprites/block_gift.png");
@@ -141,7 +142,7 @@ class RobotStacker extends Phaser.Scene {
         // this.createGrid(this, 100, 0xfffffff);
         this.addSky();
         this.addGround();
-        this.addMovingCrate();
+        this.addClawBlock();
         this.addGoalLine();
         // this.timeText = this.add.bitmapText(10, 10, "font", gameOptions.timeLimit.toString(), 72);
         this.crateGroup = this.add.group();
@@ -179,13 +180,28 @@ class RobotStacker extends Phaser.Scene {
 
     }
 
+    addClawBlock() {
+        const x = game.config.width / 2 - gameOptions.crateRange[0];
+        const y = this.ground.getBounds().top - gameOptions.crateHeight;
+        this.clawBlock = this.add.sprite(x, y, this.currentBlock);
+        this.claw = this.add.sprite(x, y, "claw");
+        this.claw.setOrigin(0.5, 1);
+        this.tweens.add({
+            targets: [this.clawBlock, this.claw],
+            x: game.config.width / 2 - gameOptions.crateRange[1],
+            duration: gameOptions.crateSpeed,
+            yoyo: true,
+            repeat: -1
+        })
+    }
+
     addCraneStructure() {
         this.craneVertical = this.add.sprite(game.config.width - 83, game.config.height / 2, "crane-vertical");
-        this.craneHorizontal = this.add.sprite(game.config.width / 2, this.movingCrate.y, "crane-horizontal");
+        this.craneHorizontal = this.add.sprite(game.config.width / 2, this.clawBlock.y, "crane-horizontal");
         // this.craneVertical.scaleY = 1.05;
         // this.craneGroup = this.add.group();
         // const verticalBlock = this.add.rectangle(game.config.width - 25, game.config.height / 2, 50, game.config.height, 0x71797E); // x, y, width, height, color
-        // const horizontalBlock = this.add.rectangle(game.config.width / 2, this.movingCrate.y, game.config.width, 50, 0x71797E);
+        // const horizontalBlock = this.add.rectangle(game.config.width / 2, this.clawBlock.y, game.config.width, 50, 0x71797E);
         // this.craneGroup.add(horizontalBlock);
         // this.craneGroup.add(verticalBlock);
         // this.matter.add.gameObject(this.craneGroup, { isStatic: true });
@@ -276,8 +292,7 @@ class RobotStacker extends Phaser.Scene {
     setCameras() {
         this.actionCamera = this.cameras.add(0, 0, game.config.width, game.config.height);
         // this.actionCamera.ignore([this.sky, this.timeText, this.craneVertical, this.craneHorizontal]);
-        this.actionCamera.ignore([this.sky, this.craneVertical, this.craneHorizontal]);
-        this.cameras.main.ignore([this.ground, this.movingCrate]);
+        this.cameras.main.ignore([this.ground, this.clawBlock]);
     }
 
     dropCrate() {
@@ -285,7 +300,7 @@ class RobotStacker extends Phaser.Scene {
         // this.addTimer();
         if (this.canDrop) {
             this.canDrop = false;
-            this.movingCrate.visible = false;
+            this.clawBlock.visible = false;
             // }
 
             if (this.currentLevel < levelGoals.length) {
@@ -333,7 +348,7 @@ class RobotStacker extends Phaser.Scene {
     }
 
     getGoalY() {
-        return this.ground.getBounds().top - levelGoals[this.currentLevel] * this.movingCrate.height
+        return this.ground.getBounds().top - levelGoals[this.currentLevel] * this.clawBlock.height
     }
 
     addTimer() {
@@ -349,7 +364,7 @@ class RobotStacker extends Phaser.Scene {
 
 
     addFallingCrate() {
-        let fallingCrate = this.matter.add.sprite(this.movingCrate.x, this.movingCrate.y, this.currentBlock);
+        let fallingCrate = this.matter.add.sprite(this.clawBlock.x, this.clawBlock.y, this.currentBlock);
         fallingCrate.body.isCrate = true;
         fallingCrate.body.hit = false;
         this.crateGroup.add(fallingCrate);
@@ -359,9 +374,9 @@ class RobotStacker extends Phaser.Scene {
     nextCrate() {
         // this.zoomCamera();
         this.currentBlock = this.getRandomBlock();
-        this.movingCrate.setTexture(this.currentBlock);
+        this.clawBlock.setTexture(this.currentBlock);
         this.canDrop = true;
-        this.movingCrate.visible = true;
+        this.clawBlock.visible = true;
     }
 
     zoomCamera() {
@@ -371,8 +386,8 @@ class RobotStacker extends Phaser.Scene {
                 maxHeight = Math.max(maxHeight, Math.round((this.ground.getBounds().top - crate.getBounds().top) / crate.displayWidth));
             }
         }, this);
-        this.movingCrate.y = this.ground.getBounds().top - maxHeight * this.movingCrate.displayWidth - gameOptions.crateHeight;
-        let zoomFactor = gameOptions.crateHeight / (this.ground.getBounds().top - this.movingCrate.y);
+        this.clawBlock.y = this.ground.getBounds().top - maxHeight * this.clawBlock.displayWidth - gameOptions.crateHeight;
+        let zoomFactor = gameOptions.crateHeight / (this.ground.getBounds().top - this.clawBlock.y);
         this.actionCamera.zoomTo(zoomFactor, 500);
         let newHeight = game.config.height / zoomFactor;
         this.actionCamera.pan(game.config.width / 2, game.config.height / 2 - (newHeight - game.config.height) / 2, 500)
@@ -383,7 +398,7 @@ class RobotStacker extends Phaser.Scene {
         this.timeText.text = (gameOptions.timeLimit - this.timer).toString()
         if (this.timer >= gameOptions.timeLimit) {
             this.timerEvent.remove();
-            this.movingCrate.destroy();
+            this.clawBlock.destroy();
             this.time.addEvent({
                 delay: 2000,
                 callback: function () {
