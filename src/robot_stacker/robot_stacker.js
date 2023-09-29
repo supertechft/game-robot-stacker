@@ -32,7 +32,7 @@ window.onload = function () {
                 gravity: {
                     y: gameOptions.gravity
                 },
-                debug: true
+                debug: false
             }
         },
         scene: [RobotStacker, PauseMessage]
@@ -155,7 +155,7 @@ class RobotStacker extends Phaser.Scene {
     }
 
     update() {
-        console.log(this.highestCrateHeight)
+        // console.log(this.highestCrateHeight)
         this.crateGroup.getChildren().forEach(function (crate) {
             // If the crate falls off bottom of the screen
             if (crate.y > game.config.height + crate.displayHeight) {
@@ -166,7 +166,7 @@ class RobotStacker extends Phaser.Scene {
                 }
                 crate.destroy();
             } else {
-                if (crate.body.hit && crate.getBounds().top < this.highestCrateHeight)
+                if (crate.body.hit && crate.getBounds().top < this.highestCrateHeight && crate.body.speed < 0.1)
                     this.highestCrateHeight = crate.getBounds().top
             }
         }, this);
@@ -256,6 +256,7 @@ class RobotStacker extends Phaser.Scene {
             // }
 
             if (this.currentLevel < levelGoals.length) {
+                // this.time.delayedCall(1000, () => { if (this.highestCrateHeight <= this.getGoalY()) {
                 if (this.highestCrateHeight <= this.getGoalY()) {
                     this.scene.pause();
                     this.scene.launch('PauseMessage', {
@@ -268,20 +269,18 @@ class RobotStacker extends Phaser.Scene {
                     this.currentLevel++;
                     this.addGoalLine(true);
                 }
+                // }})
+            } else {
+                // Game completed, show a final message and restart the game from level 1
+                this.scene.pause();
+                this.scene.launch('PauseMessage', {
+                    caller: this.scene.key,
+                    message: `You did it!
+                        You completed all ${levelGoals.length} levels!
+                        
+                        Click to restart.`
+                })
 
-
-                // if (currentLevel <= levelCriteria.length) {
-                //     this.scene.restart();
-                // } else {
-                //     // Game completed, show a final message or restart the game from level 1
-                //     this.showFinalMessage();
-                //     currentLevel = 1;
-                //     this.scene.restart();
-                // }
-            } else { // Reset the game for the next level
-                // Game completed, show a final message or restart the game from level 1
-                this.showFinalMessage();
-                this.currentLevel = 1;
                 this.scene.restart();
             }
 
