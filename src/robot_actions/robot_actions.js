@@ -77,7 +77,7 @@ function displayActions(actionName) {
     actionTextContainer.textContent = action.text;
 
     // Update the video source
-    robotVideo.src = actionName === 'start' ? '/assets/videos/start.mp4' : `/assets/videos/${actionName}.mp4`;
+    robotVideo.src = actionName === 'start' ? '../../assets/videos/start.mp4' : `../../assets/videos/${actionName}.mp4`;
 }
 
 function performAction(actionName) {
