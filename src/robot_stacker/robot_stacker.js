@@ -3,13 +3,14 @@
 * Game Options
 */
 let game;
-const levelGoals = [0, 3, 5, 7]; // Number of blocks to stack for each level. 0 is unused.
+const levelGoals = [0, 2, 4, 7]; // Number of blocks to stack for each level. 0 is unused.
 const gameOptions = {
     timeLimit: 30,
     gravity: 1,
     crateHeight: 700,
     crateRange: [-300, 300],
-    crateSpeed: 1250
+    crateSpeed: 1250,
+    goalLineColor: 0x00ff00, // Green
 }
 const font = {
     fontFamily: "Atarian",
@@ -239,14 +240,14 @@ class RobotStacker extends Phaser.Scene {
     }
 
     addGoalLine(update = false) {
-        if (!update) {
-            this.goalLine = this.add.graphics();
+        if (update) {
+            this.goalLine.clear();                  // Clears the old goal line
         } else {
-            this.goalLine.clear();
+            this.goalLine = this.add.graphics();    // Adds goal line to the scene for the first time
         }
 
         const dotSpacing = 10; // Adjust the spacing between dots
-        this.goalLine.lineStyle(2, 0x00ff00); // Set line color to green
+        this.goalLine.fillStyle(gameOptions.goalLineColor); // Set line color
         for (let x = 0; x < game.config.width; x += dotSpacing * 2) {
             this.goalLine.fillRect(x, this.getGoalY(), dotSpacing, 3); // Create a dotted line (x, y, spacing, thickness)
         }
