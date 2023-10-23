@@ -3,13 +3,18 @@
 * Game Options
 */
 let game;
-let levelGoals = [0, 3, 5, 7]; // Number of blocks to stack for each level. 0 is unused.
-let gameOptions = {
-    // timeLimit: 30,
+const levelGoals = [0, 3, 5, 7]; // Number of blocks to stack for each level. 0 is unused.
+const gameOptions = {
+    timeLimit: 30,
     gravity: 1,
     crateHeight: 700,
     crateRange: [-300, 300],
     crateSpeed: 1250
+}
+const font = {
+    fontFamily: "Atarian",
+    fontSize: "72px",
+    fill: "#ffffff",
 }
 
 
@@ -18,7 +23,7 @@ let gameOptions = {
 * Phaser Setup
 */
 window.onload = function () {
-    let config = {
+    const config = {
         type: Phaser.AUTO,
         width: 640,
         height: 960,
@@ -55,7 +60,7 @@ class PauseMessage extends Phaser.Scene {
     * Scene Setup
     */
     preload() {
-        // this.load.image("robot", "../../assets/sprites/ground.png");
+        this.load.image("youtube", "../../assets/sprites/youtube.png");
     }
 
     // Get message from the scene that called this scene
@@ -64,19 +69,25 @@ class PauseMessage extends Phaser.Scene {
     init(data) {
         this.caller = data.caller;
         this.message = data.message;
+        this.gameOver = data.gameOver;
     }
 
     create() {
         this.addBackground();
         this.displayMessage();
+        if (this.gameOver)
+            this.displayYouTubeButton();    // Display YouTube button if game over
 
         // Click to continue
         this.input.on("pointerdown", () => {
-            // this.scene.start(this.caller);
-            this.scene.resume(this.caller);
+            if (this.gameOver)  // Restart the game if game over
+                this.scene.start(this.caller);
+            else    // Otherwise, resume the game
+                this.scene.resume(this.caller);
             this.scene.stop();
         });
     }
+
 
 
     /*
@@ -85,20 +96,34 @@ class PauseMessage extends Phaser.Scene {
 
     // Create a semi-transparent black background
     addBackground() {
-        let background = this.add.rectangle(0, 0, game.config.width, game.config.height, 0x000000, 0.75);
+        const background = this.add.rectangle(0, 0, game.config.width, game.config.height, 0x000000, 0.75);
         background.setOrigin(0, 0);
     }
 
     // Create the text message in the center of the screen
     displayMessage() {
-        this.text = this.add.text(game.config.width / 2, game.config.height / 2, this.message, {
-            fontFamily: "Atarian",
-            fontSize: "32px",
-            fill: "#ffffff",
+        let messageFont = Object.assign(font, {
             align: "center",
             wordWrap: { width: game.config.width - 50, useAdvancedWrap: true }
         });
+
+        if (this.gameOver) {    // Make the font smaller if game over
+            messageFont = Object.assign(messageFont, { fontSize: "48px" });
+        }
+
+        this.text = this.add.text(game.config.width / 2, game.config.height / 2, this.message, messageFont);
         this.text.setOrigin(0.5, 0.5);
+    }
+
+    // Display a YouTube button to the bottom of the screen
+    displayYouTubeButton() {
+        // Add the button image to the scene
+        const button = this.add.image(game.config.width / 2, game.config.height - 200, 'youtube')
+        button.setScale(0.4);
+        button.setInteractive({ useHandCursor: true });
+        button.on('pointerdown', function() {
+            window.open('https://www.youtube.com/watch?v=O76LjTigHA8', '_blank');
+        });
     }
 }
 
@@ -111,7 +136,6 @@ class RobotStacker extends Phaser.Scene {
     constructor() {
         super("RobotStacker");
     }
-
 
     /*
     * Game Scene Setup
@@ -129,7 +153,7 @@ class RobotStacker extends Phaser.Scene {
     }
 
     create() {
-        this.matter.world.update30Hz();
+        this.matter.world.update30Hz(); // Runs update() at 30Hz
         this.canDrop = true;
         this.highestCrateHeight = game.config.height;
         this.currentBlock = this.getRandomBlock();
@@ -138,6 +162,7 @@ class RobotStacker extends Phaser.Scene {
         // Add Game Objects
         this.addSky();
         this.addGround();
+        this.addTimer();
         this.addClawBlock();
         this.addGoalLine();
         if (game.config.physics.matter.debug) {
@@ -148,10 +173,6 @@ class RobotStacker extends Phaser.Scene {
         this.matter.world.on("collisionstart", this.checkCollision, this);
         this.setCameras();
         this.input.on("pointerdown", this.dropCrate, this);
-
-        // this.timer = 0;
-        // this.timerEvent = null;
-        // this.timeText = this.add.bitmapText(10, 10, "font", gameOptions.timeLimit.toString(), 72);
     }
 
     update() {
@@ -177,6 +198,12 @@ class RobotStacker extends Phaser.Scene {
     /*
     * Game Objects
     */
+
+    addTimer() {
+        this.timer = 0;
+        this.timerEvent = null;
+        this.timeText = this.add.text(20, 10, gameOptions.timeLimit.toString(), font)
+    }
 
     addSky() {
         this.sky = this.add.sprite(0, 0, "sky");
@@ -225,6 +252,13 @@ class RobotStacker extends Phaser.Scene {
         }
     }
 
+    setCameras() {
+        this.actionCamera = this.cameras.add(0, 0, game.config.width, game.config.height);
+        this.actionCamera.ignore([this.sky, this.timeText]);
+        this.cameras.main.ignore([this.ground, this.clawBlock]);
+    }
+
+
 
     /*
     * Game Logic
@@ -241,19 +275,13 @@ class RobotStacker extends Phaser.Scene {
         }
     }
 
-    setCameras() {
-        this.actionCamera = this.cameras.add(0, 0, game.config.width, game.config.height);
-        // this.actionCamera.ignore([this.sky, this.timeText]);
-        this.cameras.main.ignore([this.ground, this.clawBlock]);
-    }
+    
 
     dropCrate() {
-        // if(this.canDrop && this.timer < gameOptions.timeLimit){
-        // this.addTimer();
-        if (this.canDrop) {
+        if (this.canDrop && this.timer < gameOptions.timeLimit) {
+            this.startTimer();
             this.canDrop = false;
             this.clawBlock.visible = false;
-            // }
 
             if (this.currentLevel < levelGoals.length) {
                 // this.time.delayedCall(1000, () => { if (this.highestCrateHeight <= this.getGoalY()) {
@@ -289,12 +317,13 @@ class RobotStacker extends Phaser.Scene {
     }
 
 
+
     /*
     * Helper Functions
     */
 
     getRandomBlock() {
-        let blockArray = ["block_red", "block_blue", "block_green", "block_gift", "block_yellow"];
+        const blockArray = ["block_red", "block_blue", "block_green", "block_gift", "block_yellow"];
         return blockArray[Math.floor(Math.random() * blockArray.length)];
     }
 
@@ -303,7 +332,7 @@ class RobotStacker extends Phaser.Scene {
     }
 
     addFallingCrate() {
-        let fallingCrate = this.matter.add.sprite(this.clawBlock.x, this.clawBlock.y, this.currentBlock);
+        const fallingCrate = this.matter.add.sprite(this.clawBlock.x, this.clawBlock.y, this.currentBlock);
         fallingCrate.body.isCrate = true;
         fallingCrate.body.hit = false;
         this.crateGroup.add(fallingCrate);
@@ -316,6 +345,65 @@ class RobotStacker extends Phaser.Scene {
         this.clawBlock.setTexture(this.currentBlock);
         this.canDrop = true;
         this.clawBlock.visible = true;
+    }
+
+    // Starts the timer and ticks every second
+    startTimer() {
+        if (this.timerEvent == null) {
+            this.timerEvent = this.time.addEvent({
+                delay: 1000,
+                callback: this.tick,
+                callbackScope: this,
+                loop: true
+            });
+        }
+    }
+
+    // Tick function for the timer
+    tick() {
+        this.timer++;   // Updates the timer text
+        this.timeText.text = (gameOptions.timeLimit - this.timer).toString()
+        if (this.timer >= gameOptions.timeLimit) {
+            this.timerEvent.remove();
+            this.clawBlock.destroy();   // Remove the claw block
+
+            // After 2 seconds, remove all crates
+            this.time.addEvent({
+                delay: 2000,
+                callback: function () {
+                    this.removeEvent = this.time.addEvent({
+                        delay: 500,
+                        callback: this.removeCrate,
+                        callbackScope: this,
+                        loop: true
+                    })
+                },
+                callbackScope: this
+            });
+
+            this.scene.launch('PauseMessage', {
+                caller: this.scene.key,
+                message: `Game Over!
+                You ran out of time.
+
+                Having trouble concentrating?
+                Check out a video of us demonstrating focus using a brainwave headset from Neurosky.
+                
+                Click to restart.`,
+                gameOver: true,
+            })
+        }
+    }
+
+    // Remove crates one by one and restart the game when all crates are removed
+    removeCrate() {
+        if (this.crateGroup.getChildren().length > 0) {
+            this.crateGroup.getFirstAlive().destroy();
+        }
+        else {
+            this.removeEvent.remove();
+            // this.scene.start("RobotStacker");
+        }
     }
 
     createGrid(scene, gridSize, color) {
@@ -339,64 +427,22 @@ class RobotStacker extends Phaser.Scene {
     }
 
 
-
     /*
     * Unused Functions
     */
 
-    addTimer() {
-        if (this.timerEvent == null) {
-            this.timerEvent = this.time.addEvent({
-                delay: 1000,
-                callback: this.tick,
-                callbackScope: this,
-                loop: true
-            });
-        }
-    }
-
     zoomCamera() {
-        let maxHeight = 0;
+        const maxHeight = 0;
         this.crateGroup.getChildren().forEach(function (crate) {
             if (crate.body.hit) {
                 maxHeight = Math.max(maxHeight, Math.round((this.ground.getBounds().top - crate.getBounds().top) / crate.displayWidth));
             }
         }, this);
         this.clawBlock.y = this.ground.getBounds().top - maxHeight * this.clawBlock.displayWidth - gameOptions.crateHeight;
-        let zoomFactor = gameOptions.crateHeight / (this.ground.getBounds().top - this.clawBlock.y);
+        const zoomFactor = gameOptions.crateHeight / (this.ground.getBounds().top - this.clawBlock.y);
         this.actionCamera.zoomTo(zoomFactor, 500);
-        let newHeight = game.config.height / zoomFactor;
+        const newHeight = game.config.height / zoomFactor;
         this.actionCamera.pan(game.config.width / 2, game.config.height / 2 - (newHeight - game.config.height) / 2, 500)
     }
-
-    tick() {
-        this.timer++;
-        this.timeText.text = (gameOptions.timeLimit - this.timer).toString()
-        if (this.timer >= gameOptions.timeLimit) {
-            this.timerEvent.remove();
-            this.clawBlock.destroy();
-            this.time.addEvent({
-                delay: 2000,
-                callback: function () {
-                    this.removeEvent = this.time.addEvent({
-                        delay: 500,
-                        callback: this.removeCrate,
-                        callbackScope: this,
-                        loop: true
-                    })
-                },
-                callbackScope: this
-            });
-        }
-    }
-
-    removeCrate() {
-        if (this.crateGroup.getChildren().length > 0) {
-            this.crateGroup.getFirstAlive().destroy();
-        }
-        else {
-            this.removeEvent.remove();
-            this.scene.start("RobotStacker");
-        }
-    }
+    
 }
