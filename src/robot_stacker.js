@@ -61,7 +61,7 @@ class PauseMessage extends Phaser.Scene {
     * Scene Setup
     */
     preload() {
-        this.load.image("youtube", "../assets/sprites/youtube.png");
+        this.load.image("youtube", "assets/sprites/youtube.png");
     }
 
     // Get message from the scene that called this scene
@@ -143,14 +143,14 @@ class RobotStacker extends Phaser.Scene {
     */
 
     preload() {
-        this.load.image("sky", "../assets/sprites/sky.png");
-        this.load.image("ground", "../assets/sprites/ground.png");
-        this.load.image("claw", "../assets/sprites/claw-extended.png");
-        this.load.image("block_red", "../assets/sprites/block_red.png");
-        this.load.image("block_blue", "../assets/sprites/block_blue.png");
-        this.load.image("block_gift", "../assets/sprites/block_gift.png");
-        this.load.image("block_green", "../assets/sprites/block_green.png");
-        this.load.image("block_yellow", "../assets/sprites/block_yellow.png");
+        this.load.image("sky", "assets/sprites/sky.png");
+        this.load.image("ground", "assets/sprites/ground.png");
+        this.load.image("claw", "assets/sprites/claw-extended.png");
+        this.load.image("block_red", "assets/sprites/block_red.png");
+        this.load.image("block_blue", "assets/sprites/block_blue.png");
+        this.load.image("block_gift", "assets/sprites/block_gift.png");
+        this.load.image("block_green", "assets/sprites/block_green.png");
+        this.load.image("block_yellow", "assets/sprites/block_yellow.png");
     }
 
     create() {
