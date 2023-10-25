@@ -1,6 +1,6 @@
 @font-face {
     font-family: Atarian;
-    src: url('fonts/atarian.ttf');
+    src: url('./fonts/atarian.ttf');
     font-weight: 400;
     font-weight: normal;
 }

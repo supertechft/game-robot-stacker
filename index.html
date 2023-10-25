@@ -4,30 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robot Games</title>
-    <link rel="stylesheet" href="assets/style.css">
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <title>Robot Stacker</title>
+    <style media='screen' type='text/css'>
+        @font-face {
+            font-family: Atarian;
+            src: url('./assets/fonts/atarian.ttf');
+            font-weight: 400;
+            font-weight: normal;
         }
 
-        button {
-            font-family: Atarian;
-            font-size: 50px;
-            padding: 10px 20px;
-            margin: 10px;
+        body {
+            margin: 0px;
+            padding: 0px;
+            overflow: hidden;
+            height: 100%;
         }
     </style>
 </head>
 
 <body>
-    <button id="actionsButton" onclick="window.location.href='src/robot_actions/robot_actions.html';">Robot Actions</button>
-    <button id="stackerButton" onclick="window.location.href='src/robot_stacker/robot_stacker.html';">Robot Stacker</button>
+    <div style="font-family:Atarian; position:absolute; left:-1000px; visibility:hidden;">.</div>
+    <script type="text/javascript" src="./src/robot_stacker.js"></script>
 </body>
 
 </html>
