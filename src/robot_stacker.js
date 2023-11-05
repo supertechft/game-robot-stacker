@@ -41,13 +41,54 @@ window.onload = function () {
                 debug: false
             }
         },
-        scene: [RobotStacker, PauseMessage]
+        scene: [StartScreen, RobotStacker, PauseMessage]
     }
     game = new Phaser.Game(config);
     window.focus();
 }
 
+class StartScreen extends Phaser.Scene {
+    constructor() {
+        super("StartScreen");
+        this.message = "Welcome to the Robot Stacker Game!";
+    }
+    /*
+    * Scene Setup
+    */
+    preload() {
+        this.load.image("start_button", "assets/sprites/start_button.png");
+    }
+    
+    create() {
+        this.addBackground();
+        this.displayMessage();
 
+        // Click to continue
+        this.input.on("pointerdown", () => {
+            this.scene.launch('RobotStacker')
+            this.scene.stop();
+        })
+    }
+    
+    /*
+    * Helper Functions
+    */
+    // Create a semi-transparent black background
+    addBackground() {
+        const background = this.add.rectangle(0, 0, game.config.width, game.config.height, 0x000000, 0.75);
+        background.setOrigin(0, 0);
+    }
+
+    displayMessage() {
+        let messageFont = Object.assign(font, {
+            align: "center",
+            wordWrap: { width: game.config.width - 50, useAdvancedWrap: true }
+        });
+
+        this.text = this.add.text(game.config.width / 2, game.config.height / 2, this.message, messageFont);
+        this.text.setOrigin(0.5, 0.5);
+    }
+}
 
 /*
 * Scene to display messages
@@ -88,8 +129,6 @@ class PauseMessage extends Phaser.Scene {
             this.scene.stop();
         });
     }
-
-
 
     /*
     * Helper Functions
