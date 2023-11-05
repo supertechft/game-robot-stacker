@@ -41,7 +41,7 @@ window.onload = function () {
                 debug: false
             }
         },
-        scene: [StartScreen, RobotStacker, PauseMessage]
+        scene: [RobotStacker, PauseMessage]
     }
     game = new Phaser.Game(config);
     window.focus();
@@ -62,7 +62,7 @@ class StartScreen extends Phaser.Scene {
     create() {
         this.addBackground();
         this.displayMessage();
-
+        this.displayStartButton();
         // Click to continue
         this.input.on("pointerdown", () => {
             this.scene.launch('RobotStacker')
@@ -87,6 +87,18 @@ class StartScreen extends Phaser.Scene {
 
         this.text = this.add.text(game.config.width / 2, game.config.height / 2, this.message, messageFont);
         this.text.setOrigin(0.5, 0.5);
+    }
+
+    // Display a button to start the game
+    displayStartButton() {
+        // Add the button image to the scene
+        const button = this.add.image(game.config.width / 2, game.config.height - 200, 'start_button')
+        button.setScale(0.03);
+        button.setInteractive({ useHandCursor: true });
+        button.on('pointerdown', function () {
+            this.scene.launch('RobotStacker')
+            this.scene.stop();
+        });
     }
 }
 
@@ -175,6 +187,7 @@ class PauseMessage extends Phaser.Scene {
 class RobotStacker extends Phaser.Scene {
     constructor() {
         super("RobotStacker");
+        this.started = false;
     }
 
     /*
@@ -193,6 +206,15 @@ class RobotStacker extends Phaser.Scene {
     }
 
     create() {
+        if (!this.started){
+            this.scene.pause();
+            this.started = true
+            this.scene.launch('PauseMessage', {
+                caller: this.scene.key,
+                message: `Welcome to the Robot Dropper!`
+            })
+        }
+        
         this.matter.world.update30Hz(); // Runs update() at 30Hz
         this.canDrop = true;
         this.highestCrateHeight = game.config.height;
