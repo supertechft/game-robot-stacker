@@ -118,7 +118,7 @@ class PauseMessage extends Phaser.Scene {
         const button = this.add.image(game.config.width / 2, game.config.height - 200, 'youtube')
         button.setScale(0.4);
         button.setInteractive({ useHandCursor: true });
-        button.on('pointerdown', function() {
+        button.on('pointerdown', function () {
             window.open('https://www.youtube.com/watch?v=O76LjTigHA8', '_blank');
         });
     }
@@ -151,15 +151,19 @@ class RobotStacker extends Phaser.Scene {
     }
 
     create() {
-        if (!this.started){
+        if (!this.started) {
             this.scene.pause();
             this.started = true
             this.scene.launch('PauseMessage', {
                 caller: this.scene.key,
-                message: `Welcome to the Robot Dropper!`
+                message: `Welcome to the Robot Dropper!
+                
+                Click to drop the blocks and build as high as you can!
+                
+                Click to start!`
             })
         }
-        
+
         this.matter.world.update30Hz(); // Runs update() at 30Hz
         this.canDrop = true;
         this.highestCrateHeight = game.config.height;
@@ -282,7 +286,7 @@ class RobotStacker extends Phaser.Scene {
         }
     }
 
-    
+
 
     dropCrate() {
         if (this.canDrop && this.timer < gameOptions.timeLimit) {
@@ -451,5 +455,5 @@ class RobotStacker extends Phaser.Scene {
         const newHeight = game.config.height / zoomFactor;
         this.actionCamera.pan(game.config.width / 2, game.config.height / 2 - (newHeight - game.config.height) / 2, 500)
     }
-    
+
 }
