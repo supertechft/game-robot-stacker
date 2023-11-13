@@ -160,7 +160,7 @@ class RobotStacker extends Phaser.Scene {
                 
                 Click to drop the blocks and build as high as you can!
                 
-                Click to start!`
+                Click anywhere to start!`
             })
         }
 
