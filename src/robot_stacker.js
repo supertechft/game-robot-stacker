@@ -156,9 +156,9 @@ class RobotStacker extends Phaser.Scene {
             this.started = true
             this.scene.launch('PauseMessage', {
                 caller: this.scene.key,
-                message: `Welcome to the Robot Dropper!
+                message: `Welcome to the Robot Stacker!
                 
-                Click to drop the blocks and build as high as you can!
+                Click to drop the blocks and build upwards in 30 seconds!
                 
                 Click anywhere to start!`
             })
