@@ -47,6 +47,8 @@ window.onload = function () {
     window.focus();
 }
 
+
+
 /*
 * Scene to display messages
 */
@@ -87,6 +89,8 @@ class PauseMessage extends Phaser.Scene {
         });
     }
 
+
+
     /*
     * Helper Functions
     */
@@ -118,7 +122,7 @@ class PauseMessage extends Phaser.Scene {
         const button = this.add.image(game.config.width / 2, game.config.height - 200, 'youtube')
         button.setScale(0.4);
         button.setInteractive({ useHandCursor: true });
-        button.on('pointerdown', function () {
+        button.on('pointerdown', function() {
             window.open('https://www.youtube.com/watch?v=O76LjTigHA8', '_blank');
         });
     }
@@ -156,9 +160,10 @@ class RobotStacker extends Phaser.Scene {
             this.started = true
             this.scene.launch('PauseMessage', {
                 caller: this.scene.key,
-                message: `Welcome to the Robot Stacker!
+                message: `Welcome to
+                Robot Stacker!
                 
-                Click to drop the blocks and build upwards in 30 seconds!
+                Click to drop the blocks and build upwards in ${gameOptions.timeLimit} seconds!
                 
                 Click anywhere to start!`
             })
@@ -285,8 +290,6 @@ class RobotStacker extends Phaser.Scene {
             this.nextCrate();
         }
     }
-
-
 
     dropCrate() {
         if (this.canDrop && this.timer < gameOptions.timeLimit) {
@@ -455,5 +458,4 @@ class RobotStacker extends Phaser.Scene {
         const newHeight = game.config.height / zoomFactor;
         this.actionCamera.pan(game.config.width / 2, game.config.height / 2 - (newHeight - game.config.height) / 2, 500)
     }
-
 }
