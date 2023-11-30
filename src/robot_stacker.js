@@ -136,6 +136,7 @@ class PauseMessage extends Phaser.Scene {
 class RobotStacker extends Phaser.Scene {
     constructor() {
         super("RobotStacker");
+        this.started = false;
     }
 
     /*
@@ -154,6 +155,20 @@ class RobotStacker extends Phaser.Scene {
     }
 
     create() {
+        if (!this.started) {
+            this.scene.pause();
+            this.started = true
+            this.scene.launch('PauseMessage', {
+                caller: this.scene.key,
+                message: `Welcome to
+                Robot Stacker!
+                
+                Click to drop the blocks and build upwards in ${gameOptions.timeLimit} seconds!
+                
+                Click anywhere to start!`
+            })
+        }
+
         this.matter.world.update30Hz(); // Runs update() at 30Hz
         this.canDrop = true;
         this.highestCrateHeight = game.config.height;
@@ -275,8 +290,6 @@ class RobotStacker extends Phaser.Scene {
             this.nextCrate();
         }
     }
-
-    
 
     dropCrate() {
         if (this.canDrop && this.timer < gameOptions.timeLimit) {
@@ -445,5 +458,4 @@ class RobotStacker extends Phaser.Scene {
         const newHeight = game.config.height / zoomFactor;
         this.actionCamera.pan(game.config.width / 2, game.config.height / 2 - (newHeight - game.config.height) / 2, 500)
     }
-    
 }
